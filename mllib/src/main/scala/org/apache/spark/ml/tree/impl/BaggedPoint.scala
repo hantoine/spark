@@ -17,11 +17,15 @@
 
 package org.apache.spark.ml.tree.impl
 
+import org.apache.spark.ml.feature.Instance
+
+import org.apache.commons.math3.random.Well19937c
 import org.apache.commons.math3.distribution.PoissonDistribution
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.Utils
 import org.apache.spark.util.random.XORShiftRandom
+
 
 /**
  * Internal representation of a datapoint which belongs to several subsamples of the same dataset,
@@ -63,9 +67,9 @@ private[spark] object BaggedPoint {
       withReplacement: Boolean,
       extractSampleWeight: (Datum => Double) = (_: Datum) => 1.0,
       seed: Long = Utils.random.nextLong()): RDD[BaggedPoint[Datum]] = {
-    // TODO: implement weighted bootstrapping
     if (withReplacement) {
-      convertToBaggedRDDSamplingWithReplacement(input, subsamplingRate, numSubsamples, seed)
+      convertToBaggedRDDWeightedSamplingWithReplacement(input, subsamplingRate, numSubsamples,
+                                                        extractSampleWeight, seed)
     } else {
       if (numSubsamples == 1 && subsamplingRate == 1.0) {
         convertToBaggedRDDWithoutSampling(input, extractSampleWeight)
@@ -98,16 +102,20 @@ private[spark] object BaggedPoint {
     }
   }
 
-  private def convertToBaggedRDDSamplingWithReplacement[Datum] (
+  private def convertToBaggedRDDWeightedSamplingWithReplacement[Datum] (
       input: RDD[Datum],
       subsample: Double,
       numSubsamples: Int,
+      extractSampleWeight: (Datum => Double),
       seed: Long): RDD[BaggedPoint[Datum]] = {
     input.mapPartitionsWithIndex { (partitionIndex, instances) =>
       // Use random seed = seed + partitionIndex + 1 to make generation reproducible.
-      val poisson = new PoissonDistribution(subsample)
-      poisson.reseedRandomGenerator(seed + partitionIndex + 1)
+      val randomGenerator = new Well19937c(seed + partitionIndex + 1)
+
       instances.map { instance =>
+        val poisson = new PoissonDistribution(randomGenerator,
+          subsample * extractSampleWeight(instance), PoissonDistribution.DEFAULT_EPSILON,
+          PoissonDistribution.DEFAULT_MAX_ITERATIONS)
         val subsampleCounts = new Array[Int](numSubsamples)
         var subsampleIndex = 0
         while (subsampleIndex < numSubsamples) {

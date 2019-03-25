@@ -34,8 +34,10 @@ import org.apache.spark.ml.util.Instrumentation.instrumented
 import org.apache.spark.mllib.tree.configuration.{Algo => OldAlgo}
 import org.apache.spark.mllib.tree.model.{RandomForestModel => OldRandomForestModel}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Dataset}
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.functions.{col, udf, lit}
+import org.apache.spark.sql.types.DoubleType
+
 
 /**
  * <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a> learning algorithm for
@@ -117,6 +119,16 @@ class RandomForestClassifier @Since("1.4.0") (
   def setFeatureSubsetStrategy(value: String): this.type =
     set(featureSubsetStrategy, value)
 
+  /**
+   * Sets the value of param [[weightCol]].
+   * If this is not set or empty, we treat all instance weights as 1.0.
+   * Default is not set, so all instances have weight one.
+   *
+   * @group setParam
+   */
+  @Since("3.0.0")
+  def setWeightCol(value: String): this.type = set(weightCol, value)
+
   override protected def train(
       dataset: Dataset[_]): RandomForestClassificationModel = instrumented { instr =>
     instr.logPipelineStage(this)
@@ -131,7 +143,14 @@ class RandomForestClassifier @Since("1.4.0") (
         s" numClasses=$numClasses, but thresholds has length ${$(thresholds).length}")
     }
 
-    val instances: RDD[Instance] = extractLabeledPoints(dataset, numClasses).map(_.toInstance)
+    val w = if (!isDefined(weightCol) || $(weightCol).isEmpty) lit(1.0) else col($(weightCol))
+    val instances =
+      dataset.select(col($(labelCol)).cast(DoubleType), w, col($(featuresCol))).rdd.map {
+        case Row(label: Double, weight: Double, features: Vector) =>
+          validateLabel(label, numClasses)
+          Instance(label, weight, features)
+      }
+
     val strategy =
       super.getOldStrategy(categoricalFeatures, numClasses, OldAlgo.Classification, getOldImpurity)
 

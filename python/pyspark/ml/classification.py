@@ -1036,8 +1036,8 @@ class DecisionTreeClassificationModel(DecisionTreeModel, JavaClassificationModel
 
 
 @inherit_doc
-class RandomForestClassifier(JavaEstimator, HasFeaturesCol, HasLabelCol, HasWeightCol, HasPredictionCol,
-                             HasSeed, HasRawPredictionCol, HasProbabilityCol,
+class RandomForestClassifier(JavaEstimator, HasFeaturesCol, HasLabelCol, HasWeightCol,
+                             HasPredictionCol, HasSeed, HasRawPredictionCol, HasProbabilityCol,
                              RandomForestParams, TreeClassifierParams, HasCheckpointInterval,
                              JavaMLWritable, JavaMLReadable):
     """
@@ -1090,11 +1090,12 @@ class RandomForestClassifier(JavaEstimator, HasFeaturesCol, HasLabelCol, HasWeig
     """
 
     @keyword_only
-    def __init__(self, featuresCol="features", labelCol="label", weightCol="weight", predictionCol="prediction",
-                 probabilityCol="probability", rawPredictionCol="rawPrediction",
-                 maxDepth=5, maxBins=32, minInstancesPerNode=1, minInfoGain=0.0,
-                 maxMemoryInMB=256, cacheNodeIds=False, checkpointInterval=10, impurity="gini",
-                 numTrees=20, featureSubsetStrategy="auto", seed=None, subsamplingRate=1.0):
+    def __init__(self, featuresCol="features", labelCol="label", weightCol="weight",
+                 predictionCol="prediction", probabilityCol="probability",
+                 rawPredictionCol="rawPrediction", maxDepth=5, maxBins=32, minInstancesPerNode=1,
+                 minInfoGain=0.0, maxMemoryInMB=256, cacheNodeIds=False, checkpointInterval=10,
+                 impurity="gini", numTrees=20, featureSubsetStrategy="auto", seed=None,
+                 subsamplingRate=1.0):
         """
         __init__(self, featuresCol="features", labelCol="label", predictionCol="prediction", \
                  probabilityCol="probability", rawPredictionCol="rawPrediction", \
@@ -1114,11 +1115,12 @@ class RandomForestClassifier(JavaEstimator, HasFeaturesCol, HasLabelCol, HasWeig
 
     @keyword_only
     @since("1.4.0")
-    def setParams(self, featuresCol="features", labelCol="label", weightCol="weight", predictionCol="prediction",
-                  probabilityCol="probability", rawPredictionCol="rawPrediction",
-                  maxDepth=5, maxBins=32, minInstancesPerNode=1, minInfoGain=0.0,
-                  maxMemoryInMB=256, cacheNodeIds=False, checkpointInterval=10, seed=None,
-                  impurity="gini", numTrees=20, featureSubsetStrategy="auto", subsamplingRate=1.0):
+    def setParams(self, featuresCol="features", labelCol="label", weightCol="weight",
+                  predictionCol="prediction", probabilityCol="probability",
+                  rawPredictionCol="rawPrediction", maxDepth=5, maxBins=32, minInstancesPerNode=1,
+                  minInfoGain=0.0, maxMemoryInMB=256, cacheNodeIds=False, checkpointInterval=10,
+                  seed=None, impurity="gini", numTrees=20, featureSubsetStrategy="auto",
+                  subsamplingRate=1.0):
         """
         setParams(self, featuresCol="features", labelCol="label", predictionCol="prediction", \
                  probabilityCol="probability", rawPredictionCol="rawPrediction", \

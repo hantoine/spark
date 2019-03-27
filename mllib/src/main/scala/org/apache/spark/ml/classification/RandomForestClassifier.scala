@@ -35,7 +35,7 @@ import org.apache.spark.mllib.tree.configuration.{Algo => OldAlgo}
 import org.apache.spark.mllib.tree.model.{RandomForestModel => OldRandomForestModel}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.apache.spark.sql.functions.{col, udf, lit}
+import org.apache.spark.sql.functions.{col, lit, udf}
 import org.apache.spark.sql.types.DoubleType
 
 

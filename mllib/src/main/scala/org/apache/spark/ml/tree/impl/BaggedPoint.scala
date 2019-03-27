@@ -17,11 +17,10 @@
 
 package org.apache.spark.ml.tree.impl
 
-import org.apache.spark.ml.feature.Instance
-
-import org.apache.commons.math3.random.Well19937c
 import org.apache.commons.math3.distribution.PoissonDistribution
+import org.apache.commons.math3.random.Well19937c
 
+import org.apache.spark.ml.feature.Instance
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.Utils
 import org.apache.spark.util.random.XORShiftRandom

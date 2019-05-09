@@ -81,6 +81,7 @@ singleTableSchema
 
 statement
     : query                                                            #statementDefault
+    | ctes? dmlStatementNoWith                                         #dmlStatement
     | USE db=identifier                                                #use
     | CREATE database (IF NOT EXISTS)? identifier
         (COMMENT comment=STRING)? locationSpec?
@@ -90,7 +91,7 @@ statement
     | SHOW DATABASES (LIKE? pattern=STRING)?                           #showDatabases
     | createTableHeader ('(' colTypeList ')')? tableProvider
         ((OPTIONS options=tablePropertyList) |
-        (PARTITIONED BY partitionColumnNames=identifierList) |
+        (PARTITIONED BY partitioning=transformList) |
         bucketSpec |
         locationSpec |
         (COMMENT comment=STRING) |
@@ -170,7 +171,7 @@ statement
     | (DESC | DESCRIBE) database EXTENDED? identifier                  #describeDatabase
     | (DESC | DESCRIBE) TABLE? option=(EXTENDED | FORMATTED)?
         tableIdentifier partitionSpec? describeColName?                #describeTable
-    | (DESC | DESCRIBE) QUERY? queryToDesc                             #describeQuery
+    | (DESC | DESCRIBE) QUERY? query                                   #describeQuery
     | REFRESH TABLE tableIdentifier                                    #refreshTable
     | REFRESH (STRING | .*?)                                           #refreshResource
     | CACHE LAZY? TABLE tableIdentifier
@@ -258,10 +259,6 @@ locationSpec
 
 query
     : ctes? queryNoWith
-    ;
-
-queryToDesc
-    : queryTerm queryOrganization
     ;
 
 insertInto
@@ -358,9 +355,14 @@ resource
     : identifier STRING
     ;
 
+dmlStatementNoWith
+    : insertInto queryTerm queryOrganization                                       #singleInsertQuery
+    | fromClause multiInsertQueryBody+                                             #multiInsertQuery
+    ;
+
 queryNoWith
-    : insertInto? queryTerm queryOrganization                                              #singleInsertQuery
-    | fromClause multiInsertQueryBody+                                                     #multiInsertQuery
+    : queryTerm queryOrganization                                               #noWithQuery
+    | fromClause selectStatement+                                               #queryWithFrom
     ;
 
 queryOrganization
@@ -373,9 +375,11 @@ queryOrganization
     ;
 
 multiInsertQueryBody
-    : insertInto?
-      querySpecification
-      queryOrganization
+    : insertInto selectStatement
+    ;
+
+selectStatement
+    : querySpecification queryOrganization
     ;
 
 queryTerm
@@ -576,6 +580,21 @@ namedExpression
 
 namedExpressionSeq
     : namedExpression (',' namedExpression)*
+    ;
+
+transformList
+    : '(' transforms+=transform (',' transforms+=transform)* ')'
+    ;
+
+transform
+    : qualifiedName                                                           #identityTransform
+    | transformName=identifier
+      '(' argument+=transformArgument (',' argument+=transformArgument)* ')'  #applyTransform
+    ;
+
+transformArgument
+    : qualifiedName
+    | constant
     ;
 
 expression
